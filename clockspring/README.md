@@ -1,4 +1,4 @@
-#### Printing (SDM):
+#### Printing (FDM):
 
 - Clockspring has been designed for 0.6 nozzle, however for size accuracy 0.2 nozzle is recommended
 - Use ABS or any printed material that can withstand high temperature car interior conditions
