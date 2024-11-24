@@ -2,7 +2,7 @@
 
 - Clockspring has been designed for 0.6 nozzle, however for size accuracy 0.2 nozzle is recommended
 - Use ABS or any printed material that can withstand high temperature car interior conditions
-- Grease parts during assembly to reduce long term wear
+- Grease parts using PTFE or similar during assembly to reduce long term wear
 
 #### Files:
 
