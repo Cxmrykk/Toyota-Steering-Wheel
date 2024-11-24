@@ -1,17 +1,17 @@
 #include <Arduino.h>
 
 // ADC threshold values
-const int THRESHOLD_4095 = 4000;
-const int THRESHOLD_2600 = 2300;
-const int THRESHOLD_2300 = 2000;
-const int THRESHOLD_1500 = 1450;
-const int THRESHOLD_1450 = 1400;
-const int THRESHOLD_1100 = 1000;
-const int THRESHOLD_750 = 720;
-const int THRESHOLD_720 = 700;
-const int THRESHOLD_500 = 480;
-const int THRESHOLD_330 = 300;
-const int THRESHOLD_250 = 230;
+const int THRESHOLD_4095 = 4000; // Allowance for voltage drop
+const int THRESHOLD_2600 = 2600;
+const int THRESHOLD_2300 = 2300;
+const int THRESHOLD_1500 = 1500;
+const int THRESHOLD_1450 = 1450;
+const int THRESHOLD_1100 = 1100;
+const int THRESHOLD_750 = 750;
+const int THRESHOLD_720 = 720;
+const int THRESHOLD_500 = 500;
+const int THRESHOLD_330 = 330;
+const int THRESHOLD_250 = 250;
 
 // Enum for A0 buttons
 enum class A0Button
