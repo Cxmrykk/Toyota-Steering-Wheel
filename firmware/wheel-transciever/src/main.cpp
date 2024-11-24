@@ -2,16 +2,16 @@
 
 // ADC threshold values
 const int THRESHOLD_4095 = 4000; // Allowance for voltage drop
-const int THRESHOLD_2600 = 2600;
-const int THRESHOLD_2300 = 2300;
-const int THRESHOLD_1500 = 1500;
-const int THRESHOLD_1450 = 1450;
-const int THRESHOLD_1100 = 1100;
-const int THRESHOLD_750 = 750;
-const int THRESHOLD_720 = 720;
-const int THRESHOLD_500 = 500;
-const int THRESHOLD_330 = 330;
-const int THRESHOLD_250 = 250;
+const int THRESHOLD_2600 = 2300;
+const int THRESHOLD_2300 = 2000;
+const int THRESHOLD_1500 = 1450;
+const int THRESHOLD_1450 = 1400;
+const int THRESHOLD_1100 = 1000;
+const int THRESHOLD_750 = 720;
+const int THRESHOLD_720 = 700;
+const int THRESHOLD_500 = 480;
+const int THRESHOLD_330 = 300;
+const int THRESHOLD_250 = 230;
 
 // Enum for A0 buttons
 enum class A0Button
@@ -146,32 +146,41 @@ void printA2Button(A2Button state)
   }
 }
 
-// Function to read and process A0 buttons
+// Confirms readings with a delay between
+bool confirmADCReading(int pin, int firstReading)
+{
+  delayMicroseconds(100);
+  int secondReading = analogRead(pin);
+
+  // Allow for small variations in readings (±50)
+  return abs(secondReading - firstReading) <= 50;
+}
+
 void checkA0Buttons()
 {
   int reading = analogRead(A0);
-  A0Button currentState = lastA0State; // Start with last state
+  A0Button currentState = lastA0State;
 
   if (reading <= THRESHOLD_330)
-  { // Check if below lowest threshold
-    if (lastA0State != A0Button::NONE)
+  {
+    if (lastA0State != A0Button::NONE && confirmADCReading(A0, reading))
     {
       currentState = A0Button::NONE;
     }
   }
   else if (lastA0State == A0Button::NONE)
-  { // Only check for new button if previously released
-    if (reading > THRESHOLD_4095)
+  {
+    if (reading > THRESHOLD_4095 && confirmADCReading(A0, reading))
       currentState = A0Button::OK;
-    else if (reading > THRESHOLD_2300)
+    else if (reading > THRESHOLD_2300 && confirmADCReading(A0, reading))
       currentState = A0Button::RETURN;
-    else if (reading > THRESHOLD_1450)
+    else if (reading > THRESHOLD_1450 && confirmADCReading(A0, reading))
       currentState = A0Button::NEXT_SONG;
-    else if (reading > THRESHOLD_1100)
+    else if (reading > THRESHOLD_1100 && confirmADCReading(A0, reading))
       currentState = A0Button::PREV_SONG;
-    else if (reading > THRESHOLD_720)
+    else if (reading > THRESHOLD_720 && confirmADCReading(A0, reading))
       currentState = A0Button::VOL_UP;
-    else if (reading > THRESHOLD_330)
+    else if (reading > THRESHOLD_330 && confirmADCReading(A0, reading))
       currentState = A0Button::VOL_DOWN;
   }
 
@@ -182,32 +191,31 @@ void checkA0Buttons()
   }
 }
 
-// Function to read and process A1 buttons
 void checkA1Buttons()
 {
   int reading = analogRead(A1);
-  A1Button currentState = lastA1State; // Start with last state
+  A1Button currentState = lastA1State;
 
   if (reading <= THRESHOLD_330)
-  { // Check if below lowest threshold
-    if (lastA1State != A1Button::NONE)
+  {
+    if (lastA1State != A1Button::NONE && confirmADCReading(A1, reading))
     {
       currentState = A1Button::NONE;
     }
   }
   else if (lastA1State == A1Button::NONE)
-  { // Only check for new button if previously released
-    if (reading > THRESHOLD_4095)
+  {
+    if (reading > THRESHOLD_4095 && confirmADCReading(A1, reading))
       currentState = A1Button::RADAR;
-    else if (reading > THRESHOLD_2600)
+    else if (reading > THRESHOLD_2600 && confirmADCReading(A1, reading))
       currentState = A1Button::LANE_ASSIST;
-    else if (reading > THRESHOLD_1450)
+    else if (reading > THRESHOLD_1450 && confirmADCReading(A1, reading))
       currentState = A1Button::LEFT_ARROW;
-    else if (reading > THRESHOLD_1100)
+    else if (reading > THRESHOLD_1100 && confirmADCReading(A1, reading))
       currentState = A1Button::UP_ARROW;
-    else if (reading > THRESHOLD_720)
+    else if (reading > THRESHOLD_720 && confirmADCReading(A1, reading))
       currentState = A1Button::DOWN_ARROW;
-    else if (reading > THRESHOLD_330)
+    else if (reading > THRESHOLD_330 && confirmADCReading(A1, reading))
       currentState = A1Button::RIGHT_ARROW;
   }
 
@@ -218,32 +226,31 @@ void checkA1Buttons()
   }
 }
 
-// Function to read and process A2 buttons
 void checkA2Buttons()
 {
   int reading = analogRead(A2);
-  A2Button currentState = lastA2State; // Start with last state
+  A2Button currentState = lastA2State;
 
   if (reading <= THRESHOLD_250)
-  { // Check if below lowest threshold
-    if (lastA2State != A2Button::NONE)
+  {
+    if (lastA2State != A2Button::NONE && confirmADCReading(A2, reading))
     {
       currentState = A2Button::NONE;
     }
   }
   else if (lastA2State == A2Button::NONE)
-  { // Only check for new button if previously released
-    if (reading > THRESHOLD_4095)
+  {
+    if (reading > THRESHOLD_4095 && confirmADCReading(A2, reading))
       currentState = A2Button::CRUISE_CONTROL;
-    else if (reading > THRESHOLD_2600)
+    else if (reading > THRESHOLD_2600 && confirmADCReading(A2, reading))
       currentState = A2Button::CANCEL;
-    else if (reading > THRESHOLD_1500)
+    else if (reading > THRESHOLD_1500 && confirmADCReading(A2, reading))
       currentState = A2Button::CC_PLUS;
-    else if (reading > THRESHOLD_750)
+    else if (reading > THRESHOLD_750 && confirmADCReading(A2, reading))
       currentState = A2Button::CC_MINUS_MODE;
-    else if (reading > THRESHOLD_500)
+    else if (reading > THRESHOLD_500 && confirmADCReading(A2, reading))
       currentState = A2Button::PHONE;
-    else if (reading > THRESHOLD_250)
+    else if (reading > THRESHOLD_250 && confirmADCReading(A2, reading))
       currentState = A2Button::ASSISTANT;
   }
 
