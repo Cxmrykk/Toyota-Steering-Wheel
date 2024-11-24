@@ -41,8 +41,11 @@
 
 **Connectors**
 
-- 24 pin ATX cable
+- 24 pin ATX cable (24-pin Molex Mini-Fit Jr.™)
 - 16 pin IDC cable
+- Also for the PCBs:
+  - Sparkfun ATX Power Supply Connector - Right Angle (`PRT-09498`)
+  - Two 7x1 Pin Headers (Female and Male) or just cut to size
 
 **Airbag Connector**
 
