@@ -1,3 +1,8 @@
+<div align="center">
+  <h1>Toyota Steering Wheel</h1>
+  <p>Toyota (20-24) EV Steering Wheel Transceiver, Clockspring and Spline Adapter.<br>Personal project for extending compatibility with my 2003 Toyota Corolla, including extended functionality for the buttons, paddles and horn</p>
+</div>
+
 ### Development Progress
 
 #### Models:
@@ -68,3 +73,4 @@
 
 - Provides wiring for the airbag and repurposed horn cable (12V Power)
 - Printed locally using Bambu P1S (White ABS, 0.2mm nozzle)
+- You must also purchase the clockspring used with the old steering wheel, as the new clockspring will reuse the spiral ribbon cable and connectors.
