@@ -1,6 +1,7 @@
 <div align="center">
   <h1>Toyota Steering Wheel</h1>
-  <p>Toyota (20-24) EV Steering Wheel Transceiver, Clockspring and Spline Adapter.<br>Personal project for extending compatibility with my 2003 Toyota Corolla, including extended functionality for the buttons, paddles and horn</p>
+  <p>Toyota (20-24) EV Steering Wheel Transceiver, Clockspring and Spline Adapter.</p>
+  <p>Personal project for extending compatibility with my 2003 Toyota Corolla, including extended functionality for the buttons, paddles and horn</p>
 </div>
 
 ### Development Progress
