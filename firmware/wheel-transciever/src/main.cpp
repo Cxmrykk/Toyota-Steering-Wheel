@@ -4,6 +4,8 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
+#include "button_handler.hpp"
+
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define ADVERTISING_INTERVAL 15000
@@ -23,16 +25,6 @@ class MyServerCallbacks : public BLEServerCallbacks {
   void onDisconnect(BLEServer* pServer) {
     deviceConnected = false;
     Serial.println("Disconnected");
-  }
-};
-
-class MyCallbacks : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic* pCharacteristic) {
-    std::string value = pCharacteristic->getValue();
-    if (value.length() > 0 && value == "ping") {
-      pCharacteristic->setValue("pong");
-      pCharacteristic->notify();
-    }
   }
 };
 
@@ -65,7 +57,6 @@ void setup() {
                                BLECharacteristic::PROPERTY_WRITE |
                                BLECharacteristic::PROPERTY_NOTIFY);
 
-  pCharacteristic->setCallbacks(new MyCallbacks());
   pCharacteristic->addDescriptor(new BLE2902());
   pService->start();
 
@@ -75,6 +66,8 @@ void setup() {
   pAdvertising->setMaxPreferred(0x12);
   pAdvertising->setMinInterval(0x20);
   pAdvertising->setMaxInterval(0x40);
+
+  buttonHandlerSetup();
 
   startAdvertising();
   Serial.println("Ready");
@@ -94,6 +87,12 @@ void loop() {
   if (!deviceConnected &&
       (millis() - lastAdvertisingTime >= ADVERTISING_INTERVAL)) {
     startAdvertising();
+  }
+
+  String buttonState = handleButtons();
+  if (buttonState.length() > 0 && deviceConnected) {
+    pCharacteristic->setValue(buttonState.c_str());
+    pCharacteristic->notify();
   }
 
   delay(1000);
