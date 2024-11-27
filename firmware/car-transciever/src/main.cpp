@@ -48,9 +48,8 @@ bool connectToServer() {
     return false;
   }
 
-  if (pRemoteCharacteristic->canNotify()) {
+  if (pRemoteCharacteristic->canNotify())
     pRemoteCharacteristic->registerForNotify(notifyCallback);
-  }
 
   connected = true;
   return true;
@@ -86,8 +85,7 @@ void loop() {
   }
 
   if (connected) {
-    pRemoteCharacteristic->writeValue("ping");
-    delay(2000);
+    // Removed ping message, now passively listens for notifications
   } else {
     unsigned long currentTime = millis();
     if (currentTime - lastScanTime >= SCAN_INTERVAL) {
@@ -96,5 +94,5 @@ void loop() {
     }
   }
 
-  delay(1000);
+  delay(10);  // Reduced delay
 }
