@@ -4,6 +4,6 @@
 #include <Arduino.h>
 
 void buttonHandlerSetup();
-String handleButtons();
+uint8_t getButtonState();
 
 #endif

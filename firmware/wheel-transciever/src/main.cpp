@@ -89,11 +89,11 @@ void loop() {
     startAdvertising();
   }
 
-  String buttonState = handleButtons();
-  if (buttonState.length() > 0 && deviceConnected) {
-    pCharacteristic->setValue(buttonState.c_str());
+  uint8_t buttonState = getButtonState();
+  if (buttonState != 0 && deviceConnected) {
+    pCharacteristic->setValue(&buttonState, 1); // Send the byte to receiver (ESP32S3)
     pCharacteristic->notify();
   }
 
-  delay(1000);
+  delay(10);
 }
