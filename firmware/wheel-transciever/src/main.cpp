@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <BLE2902.h>
+#include <BLEClient.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -8,7 +9,7 @@
 
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define ADVERTISING_INTERVAL 15000
+#define ADVERTISING_INTERVAL 500
 
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
@@ -33,11 +34,14 @@ void startAdvertising() {
   BLEAdvertisementData advertisementData;
   advertisementData.setCompleteServices(BLEUUID(SERVICE_UUID));
   advertisementData.setName("XIAO_ESP32C3");
-  pAdvertising->setAdvertisementData(advertisementData);
+  advertisementData.setManufacturerData(
+      std::string(deviceConnected ? "C" : "D")
+          .c_str());  // Advertise connection status
 
   BLEAdvertisementData scanResponseData;
   scanResponseData.setCompleteServices(BLEUUID(SERVICE_UUID));
   pAdvertising->setScanResponseData(scanResponseData);
+  pAdvertising->setAdvertisementData(advertisementData);
 
   BLEDevice::startAdvertising();
   lastAdvertisingTime = millis();
@@ -91,7 +95,7 @@ void loop() {
 
   uint8_t buttonState = getButtonState();
   if (buttonState != 0 && deviceConnected) {
-    pCharacteristic->setValue(&buttonState, 1); // Send the byte to receiver (ESP32S3)
+    pCharacteristic->setValue(&buttonState, 1);
     pCharacteristic->notify();
   }
 

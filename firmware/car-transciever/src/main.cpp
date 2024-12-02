@@ -10,6 +10,7 @@ static boolean connected = false;
 static boolean doScan = false;
 static BLERemoteCharacteristic* pRemoteCharacteristic;
 static BLEAdvertisedDevice* myDevice;
+static BLEClient* pClient;
 
 enum class ButtonID : uint8_t {
   NONE = 0,
@@ -56,10 +57,26 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic,
   Serial.println();
 }
 
+class MyClientCallback : public BLEClientCallbacks {
+  void onConnect(BLEClient* _pClient) {}
+
+  void onDisconnect(BLEClient* _pClient) {
+    connected = false;
+    Serial.println("Disconnected from server");
+    doConnect = false;
+    doScan = true;
+  }
+};
+
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     if (advertisedDevice.haveServiceUUID() &&
         advertisedDevice.isAdvertisingService(serviceUUID)) {
+      if (advertisedDevice.getManufacturerData() == "C") {
+        Serial.println("Server already connected, skipping.");
+        return;
+      }
+
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
@@ -69,8 +86,22 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 };
 
 bool connectToServer() {
-  BLEClient* pClient = BLEDevice::createClient();
-  pClient->connect(myDevice);
+  pClient = BLEDevice::createClient();
+  pClient->setClientCallbacks(new MyClientCallback());
+
+  unsigned long connectStartTime = millis();
+  const unsigned long CONNECTION_TIMEOUT = 5000;
+
+  while (!pClient->isConnected() &&
+         (millis() - connectStartTime) < CONNECTION_TIMEOUT) {
+    pClient->connect(myDevice);
+    delay(500);
+  }
+
+  if (!pClient->isConnected()) {
+    Serial.println("Connection timed out");
+    return false;
+  }
 
   BLERemoteService* pRemoteService = pClient->getService(serviceUUID);
   if (pRemoteService == nullptr) {
@@ -97,7 +128,7 @@ void startScan() {
   pBLEScan->setInterval(1349);
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
-  pBLEScan->start(5, false);
+  pBLEScan->start(0, false);  // Continuous scan
 }
 
 void setup() {
@@ -105,9 +136,6 @@ void setup() {
   BLEDevice::init("XIAO_ESP32S3");
   startScan();
 }
-
-unsigned long lastScanTime = 0;
-const unsigned long SCAN_INTERVAL = 15000;
 
 void loop() {
   if (doConnect) {
@@ -120,13 +148,10 @@ void loop() {
     doConnect = false;
   }
 
-  if (!connected) {
-    unsigned long currentTime = millis();
-    if (currentTime - lastScanTime >= SCAN_INTERVAL) {
-      startScan();
-      lastScanTime = currentTime;
-    }
+  if (!connected && doScan) {
+    startScan();
+    doScan = false;
   }
 
-  delay(10);
+  delay(100);
 }
