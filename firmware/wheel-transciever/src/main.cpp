@@ -10,12 +10,16 @@
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define ADVERTISING_INTERVAL 500
+#define INTERIOR_LIGHT_ID 22  // ID for interior light state
+#define BACKLIGHT_PIN D7      // Pin for the backlight
 
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 unsigned long lastAdvertisingTime = 0;
+unsigned long lastBacklightToggleTime = 0;
+bool backlightState = false;
 
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
@@ -35,8 +39,7 @@ void startAdvertising() {
   advertisementData.setCompleteServices(BLEUUID(SERVICE_UUID));
   advertisementData.setName("XIAO_ESP32C3");
   advertisementData.setManufacturerData(
-      std::string(deviceConnected ? "C" : "D")
-          .c_str());  // Advertise connection status
+      std::string(deviceConnected ? "C" : "D").c_str());
 
   BLEAdvertisementData scanResponseData;
   scanResponseData.setCompleteServices(BLEUUID(SERVICE_UUID));
@@ -73,6 +76,9 @@ void setup() {
 
   buttonHandlerSetup();
 
+  pinMode(BACKLIGHT_PIN, OUTPUT);    // Initialize backlight pin as output
+  digitalWrite(BACKLIGHT_PIN, LOW);  // Initially off
+
   startAdvertising();
   Serial.println("Ready");
 }
@@ -97,6 +103,24 @@ void loop() {
   if (buttonState != 0 && deviceConnected) {
     pCharacteristic->setValue(&buttonState, 1);
     pCharacteristic->notify();
+  }
+
+  if (deviceConnected) {
+    std::string value = pCharacteristic->getValue();
+    if (value.length() > 0) {
+      uint8_t receivedState = value[0];
+      if ((receivedState & 0x7F) == INTERIOR_LIGHT_ID) {
+        digitalWrite(BACKLIGHT_PIN, !(receivedState & 0x80));
+      }
+    }
+  } else {  // Disconnected, toggle backlight
+    if (millis() - lastBacklightToggleTime >= 500) {
+      Serial.print("Toggled");
+      Serial.println(lastBacklightToggleTime);
+      backlightState = !backlightState;
+      digitalWrite(BACKLIGHT_PIN, backlightState);
+      lastBacklightToggleTime = millis();
+    }
   }
 
   delay(10);
