@@ -5,7 +5,7 @@
 static BLEUUID serviceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 #define INTERIOR_LIGHT D1
-#define INTERIOR_LIGHT_ID 22
+#define INTERIOR_LIGHT_ID 23  // Changed to match new ButtonID enum
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -17,37 +17,36 @@ static bool lastInteriorLightState = false;
 
 enum class ButtonID : uint8_t {
   NONE = 0,
-  OK = 1,
-  RETURN = 2,
+  MODE = 1,
+  LEFT = 2,
   NEXT_SONG = 3,
-  PREV_SONG = 4,
-  VOL_UP = 5,
-  VOL_DOWN = 6,
-  RADAR = 7,
-  LANE_ASSIST = 8,
-  LEFT_ARROW = 9,
-  UP_ARROW = 10,
-  DOWN_ARROW = 11,
-  RIGHT_ARROW = 12,
-  CRUISE_CONTROL = 13,
-  CANCEL = 14,
-  CC_PLUS = 15,
-  CC_MINUS_MODE = 16,
-  PHONE = 17,
-  ASSISTANT = 18,
-  PADDLE_LEFT = 19,
-  PADDLE_RIGHT = 20,
-  HORN = 21
+  OK = 4,
+  UP = 5,
+  PREV_SONG = 6,
+  RETURN = 7,
+  PHONE = 8,
+  DOWN = 9,
+  VOLUME_UP = 10,
+  ASSISTANT = 11,
+  RIGHT = 12,
+  VOLUME_DOWN = 13,
+  CRUISE_CONTROL = 14,
+  CANCEL = 15,
+  CC_PLUS = 16,
+  CC_MINUS = 17,
+  RADAR = 18,
+  LANE_ASSIST = 19,
+  PADDLE_LEFT = 20,
+  PADDLE_RIGHT = 21,
+  HORN = 22,
+  BACKLIGHT = 23,  // Receive only
 };
 
-static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic,
-                           uint8_t* pData, size_t length, bool isNotify) {
-  Serial.print("Notification received: ");
+static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
   for (int i = 0; i < length; i++) {
     uint8_t buttonState = pData[i];
-    bool buttonReleased = (buttonState & 0x80) != 0;  // Check 8th bit
-    ButtonID buttonID =
-        static_cast<ButtonID>(buttonState & 0x7F);  // Mask out 8th bit
+    bool buttonReleased = (buttonState & 0x80) != 0;                // Check 8th bit
+    ButtonID buttonID = static_cast<ButtonID>(buttonState & 0x7F);  // Mask out 8th bit
 
     if (buttonReleased) {
       digitalWrite(LED_BUILTIN, HIGH);
@@ -75,8 +74,7 @@ class MyClientCallback : public BLEClientCallbacks {
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
-    if (advertisedDevice.haveServiceUUID() &&
-        advertisedDevice.isAdvertisingService(serviceUUID)) {
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
@@ -92,8 +90,7 @@ bool connectToServer() {
   unsigned long connectStartTime = millis();
   const unsigned long CONNECTION_TIMEOUT = 5000;
 
-  while (!pClient->isConnected() &&
-         (millis() - connectStartTime) < CONNECTION_TIMEOUT) {
+  while (!pClient->isConnected() && (millis() - connectStartTime) < CONNECTION_TIMEOUT) {
     pClient->connect(myDevice);
     delay(500);
   }
@@ -130,7 +127,7 @@ void startScan() {
 
 void setup() {
   Serial.begin(115200);
-  BLEDevice::init("XIAO_ESP32S3");
+  BLEDevice::init("XIAO_ESP32S3_CLIENT");  // Changed client name
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
