@@ -4,8 +4,14 @@
 
 static BLEUUID serviceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
-#define INTERIOR_LIGHT D1
-#define INTERIOR_LIGHT_ID 23  // Changed to match new ButtonID enum
+
+#define PIN_INTERIOR D0
+#define PIN_HORN D1
+#define PIN_LATCH D2
+#define PIN_CLOCK D3
+#define PIN_DATA D4
+#define PIN_AUX_1 D5
+#define PIN_AUX_2 D6
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -42,19 +48,84 @@ enum class ButtonID : uint8_t {
   BACKLIGHT = 23,  // Receive only
 };
 
+// Number of shift registers
+const int NUM_REGISTERS = 3;
+const int NUM_OUTPUTS = NUM_REGISTERS * 8;  // Total number of outputs (8 outputs per register * 3 registers)
+
+// Array to keep track of current state
+byte registerStates[NUM_REGISTERS] = {0};
+
+// Function to clear all registers
+void clearRegisters() {
+  for (int i = 0; i < NUM_REGISTERS; i++) {
+    registerStates[i] = 0;
+  }
+}
+
+// Function to write data to all registers
+void writeRegisters() {
+  digitalWrite(PIN_LATCH, LOW);
+
+  // Write data to each register
+  for (int i = NUM_REGISTERS - 1; i >= 0; i--) {
+    shiftOut(PIN_DATA, PIN_CLOCK, MSBFIRST, registerStates[i]);
+  }
+
+  digitalWrite(PIN_LATCH, HIGH);
+}
+
+// Function to set a specific output (0-23)
+void setOutput(int output, bool state) {
+  if (output < 0 || output >= NUM_OUTPUTS) return;
+
+  int registerIndex = output / 8;
+  int bitIndex = output % 8;
+
+  if (state) {
+    registerStates[registerIndex] |= (1 << bitIndex);
+  } else {
+    registerStates[registerIndex] &= ~(1 << bitIndex);
+  }
+
+  writeRegisters();
+}
+
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
   for (int i = 0; i < length; i++) {
     uint8_t buttonState = pData[i];
-    bool buttonReleased = (buttonState & 0x80) != 0;                // Check 8th bit
-    ButtonID buttonID = static_cast<ButtonID>(buttonState & 0x7F);  // Mask out 8th bit
+    uint8_t buttonValue = buttonState & 0x7F;
+    bool buttonReleased = (buttonState & 0x80) != 0;         // Check 8th bit
+    ButtonID buttonID = static_cast<ButtonID>(buttonValue);  // Mask out 8th bit
 
     if (buttonReleased) {
       digitalWrite(LED_BUILTIN, HIGH);
-      Serial.print(static_cast<uint8_t>(buttonID));
+
+      // Turn off shift register output
+      if (buttonValue <= 21) {
+        setOutput(buttonValue, false);
+      }
+
+      // Turn off horn
+      if (buttonValue == 22) {
+        digitalWrite(PIN_HORN, LOW);
+      }
+
+      Serial.print(buttonValue);
       Serial.println(" released");
     } else {
       digitalWrite(LED_BUILTIN, LOW);
-      Serial.print(static_cast<uint8_t>(buttonID));
+
+      // Turn on shift register output
+      if (buttonValue <= 21) {
+        setOutput(buttonValue, true);
+      }
+
+      // Turn on horn
+      if (buttonValue == 22) {
+        digitalWrite(PIN_HORN, HIGH);
+      }
+
+      Serial.print(buttonValue);
       Serial.println(" pressed");
     }
   }
@@ -127,13 +198,26 @@ void startScan() {
 
 void setup() {
   Serial.begin(115200);
-  BLEDevice::init("XIAO_ESP32S3_CLIENT");  // Changed client name
+  BLEDevice::init("XIAO_ESP32S3_CLIENT");
 
+  // Test the LED
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  pinMode(INTERIOR_LIGHT, INPUT_PULLUP);
+  pinMode(PIN_INTERIOR, INPUT);
+  pinMode(PIN_HORN, OUTPUT);
+  pinMode(PIN_LATCH, OUTPUT);
+  pinMode(PIN_CLOCK, OUTPUT);
+  pinMode(PIN_DATA, OUTPUT);
 
+  // Initially disable the horn
+  digitalWrite(PIN_HORN, LOW);
+
+  // Initially clear all registers
+  clearRegisters();
+  writeRegisters();
+
+  // Start BLE scanning
   startScan();
 }
 
@@ -154,11 +238,11 @@ void loop() {
   }
 
   if (connected) {
-    bool currentInteriorLightState = digitalRead(INTERIOR_LIGHT) == LOW;
+    bool currentInteriorLightState = digitalRead(PIN_INTERIOR) == LOW;
     if (currentInteriorLightState != lastInteriorLightState) {
-      uint8_t stateToSend = INTERIOR_LIGHT_ID;
+      uint8_t stateToSend = static_cast<uint8_t>(ButtonID::BACKLIGHT);
       if (!currentInteriorLightState) {
-        stateToSend |= 0x80;  // Set 8th bit if released
+        stateToSend |= 0x80;  // Set 8th bit if turning off
       }
       pRemoteCharacteristic->writeValue(&stateToSend, 1);
       lastInteriorLightState = currentInteriorLightState;
