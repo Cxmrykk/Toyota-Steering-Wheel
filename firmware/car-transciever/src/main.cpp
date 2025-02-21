@@ -1,17 +1,22 @@
 #include <Arduino.h>
 #include <BLEClient.h>
 #include <BLEDevice.h>
+#include <SPI.h>
+
+#include "remote.hpp"
 
 static BLEUUID serviceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
+// use hardware SPI
+// implement remote logic
+
 #define PIN_INTERIOR D0
 #define PIN_HORN D1
-#define PIN_LATCH D2
-#define PIN_CLOCK D3
-#define PIN_DATA D4
-#define PIN_AUX_1 D5
-#define PIN_AUX_2 D6
+#define PIN_AUX_LATCH D2
+#define PIN_SR_LATCH D3
+#define PIN_CLOCK SCK
+#define PIN_DATA MOSI
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -21,33 +26,6 @@ static BLEAdvertisedDevice* myDevice;
 static BLEClient* pClient;
 static bool lastInteriorLightState = false;
 
-enum class ButtonID : uint8_t {
-  NONE = 0,
-  MODE = 1,
-  LEFT = 2,
-  NEXT_SONG = 3,
-  OK = 4,
-  UP = 5,
-  PREV_SONG = 6,
-  RETURN = 7,
-  PHONE = 8,
-  DOWN = 9,
-  VOLUME_UP = 10,
-  ASSISTANT = 11,
-  RIGHT = 12,
-  VOLUME_DOWN = 13,
-  CRUISE_CONTROL = 14,
-  CANCEL = 15,
-  CC_PLUS = 16,
-  CC_MINUS = 17,
-  RADAR = 18,
-  LANE_ASSIST = 19,
-  PADDLE_LEFT = 20,
-  PADDLE_RIGHT = 21,
-  HORN = 22,
-  BACKLIGHT = 23,  // Receive only
-};
-
 // Number of shift registers
 const int NUM_REGISTERS = 3;
 const int NUM_OUTPUTS = NUM_REGISTERS * 8;  // Total number of outputs (8 outputs per register * 3 registers)
@@ -55,26 +33,35 @@ const int NUM_OUTPUTS = NUM_REGISTERS * 8;  // Total number of outputs (8 output
 // Array to keep track of current state
 byte registerStates[NUM_REGISTERS] = {0};
 
-// Function to clear all registers
+// Function to clear all registers (remains the same)
 void clearRegisters() {
   for (int i = 0; i < NUM_REGISTERS; i++) {
     registerStates[i] = 0;
   }
 }
 
-// Function to write data to all registers
+// Function to write data to all registers using hardware SPI
 void writeRegisters() {
-  digitalWrite(PIN_LATCH, LOW);
+  // Start the SPI transaction (20 Mhz)
+  SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
 
-  // Write data to each register
+  // Pull latch pin low to start transfer
+  digitalWrite(PIN_SR_LATCH, LOW);
+
+  // Transfer data for each register
+  // Note: We transfer from last register to first (MSB first)
   for (int i = NUM_REGISTERS - 1; i >= 0; i--) {
-    shiftOut(PIN_DATA, PIN_CLOCK, MSBFIRST, registerStates[i]);
+    SPI.transfer(registerStates[i]);
   }
 
-  digitalWrite(PIN_LATCH, HIGH);
+  // Pull latch pin high to update outputs
+  digitalWrite(PIN_SR_LATCH, HIGH);
+
+  // End the SPI transaction
+  SPI.endTransaction();
 }
 
-// Function to set a specific output (0-23)
+// Function to set a specific output (remains the same)
 void setOutput(int output, bool state) {
   if (output < 0 || output >= NUM_OUTPUTS) return;
 
@@ -110,6 +97,9 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
         digitalWrite(PIN_HORN, LOW);
       }
 
+      // Set remote output state for button
+      setPWMForButton(buttonID, false);
+
       Serial.print(buttonValue);
       Serial.println(" released");
     } else {
@@ -124,6 +114,9 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
       if (buttonValue == 22) {
         digitalWrite(PIN_HORN, HIGH);
       }
+
+      // Set remote output state for button
+      setPWMForButton(buttonID, true);
 
       Serial.print(buttonValue);
       Serial.println(" pressed");
@@ -200,15 +193,18 @@ void setup() {
   Serial.begin(115200);
   BLEDevice::init("XIAO_ESP32S3_CLIENT");
 
-  // Test the LED
+  // Initialise SPI
+  SPI.begin();
+
+  // Set the LED to default state (on)
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
+  // Initialise other pins
   pinMode(PIN_INTERIOR, INPUT);
   pinMode(PIN_HORN, OUTPUT);
-  pinMode(PIN_LATCH, OUTPUT);
-  pinMode(PIN_CLOCK, OUTPUT);
-  pinMode(PIN_DATA, OUTPUT);
+  pinMode(PIN_AUX_LATCH, OUTPUT);
+  pinMode(PIN_SR_LATCH, OUTPUT);
 
   // Initially disable the horn
   digitalWrite(PIN_HORN, LOW);
