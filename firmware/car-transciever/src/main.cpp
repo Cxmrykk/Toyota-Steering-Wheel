@@ -13,7 +13,6 @@ static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
 #define PIN_INTERIOR D0
 #define PIN_HORN D1
-#define PIN_AUX_LATCH D2
 #define PIN_SR_LATCH D3
 #define PIN_CLOCK SCK
 #define PIN_DATA MOSI
@@ -98,7 +97,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
       }
 
       // Set remote output state for button
-      setPWMForButton(buttonID, false);
+      setRemoteState(buttonID, false);
 
       Serial.print(buttonValue);
       Serial.println(" released");
@@ -116,7 +115,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
       }
 
       // Set remote output state for button
-      setPWMForButton(buttonID, true);
+      setRemoteState(buttonID, true);
 
       Serial.print(buttonValue);
       Serial.println(" pressed");
