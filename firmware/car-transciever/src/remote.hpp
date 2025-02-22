@@ -40,20 +40,20 @@ enum class ButtonID : uint8_t {
 // Map ButtonID to PWM configuration
 const std::map<ButtonID, uint8_t> BUTTON_SPI_MAP = {
     // Volume controls on AUX_1
-    {ButtonID::VOLUME_UP, 0},
-    {ButtonID::VOLUME_DOWN, 127 + 16},
+    {ButtonID::VOLUME_UP, 255},
+    {ButtonID::VOLUME_DOWN, 255 - 1},
 
     // Media controls on AUX_1
-    {ButtonID::NEXT_SONG, 127 + 32},
-    {ButtonID::PREV_SONG, 127 + 48},
+    {ButtonID::NEXT_SONG, 255 - 2},
+    {ButtonID::PREV_SONG, 255 - 3},
 
     // Phone controls on AUX_2
-    {ButtonID::PHONE, 127 + 64},
-    {ButtonID::RETURN, 127 + 80},
+    {ButtonID::PHONE, 255 - 4},
+    {ButtonID::RETURN, 255 - 5},
 
     // Navigation controls on AUX_2
-    {ButtonID::ASSISTANT, 127 + 96},
-    {ButtonID::MODE, 127 + 112},
+    {ButtonID::ASSISTANT, 255 - 6},
+    {ButtonID::MODE, 255 - 7},
 };
 
 // Function to set PWM output for a button
@@ -62,19 +62,13 @@ inline void setRemoteState(ButtonID button, bool isPressed) {
   if (it != BUTTON_SPI_MAP.end()) {
     Serial.println(static_cast<int>(button));
 
-    // Start the SPI transaction (20 Mhz)
-    SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
-
     // Pull latch pin low to start transfer
     digitalWrite(PIN_AUX_LATCH, LOW);
 
     // Transfer data for each register
-    SPI.transfer(isPressed ? it->second : 255);
+    SPI.transfer(isPressed ? it->second : 0);
 
     // Pull latch pin high to update outputs
     digitalWrite(PIN_AUX_LATCH, HIGH);
-
-    // End the SPI transaction
-    SPI.endTransaction();
   }
 }

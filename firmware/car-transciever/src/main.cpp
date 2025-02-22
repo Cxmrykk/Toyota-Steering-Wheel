@@ -41,9 +41,6 @@ void clearRegisters() {
 
 // Function to write data to all registers using hardware SPI
 void writeRegisters() {
-  // Start the SPI transaction (20 Mhz)
-  SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
-
   // Pull latch pin low to start transfer
   digitalWrite(PIN_SR_LATCH, LOW);
 
@@ -55,9 +52,6 @@ void writeRegisters() {
 
   // Pull latch pin high to update outputs
   digitalWrite(PIN_SR_LATCH, HIGH);
-
-  // End the SPI transaction
-  SPI.endTransaction();
 }
 
 // Function to set a specific output (remains the same)
@@ -194,6 +188,9 @@ void setup() {
 
   // Initialise SPI
   SPI.begin();
+  SPI.setDataMode(SPI_MODE0); // TPL0501 uses SPI Mode 0 (CPOL=0, CPHA=0)
+  SPI.setBitOrder(MSBFIRST);   // TPL0501 uses MSB first
+  SPI.setClockDivider(SPI_CLOCK_DIV4); 
 
   // Set the LED to default state (on)
   pinMode(LED_BUILTIN, OUTPUT);
@@ -208,9 +205,20 @@ void setup() {
   // Initially disable the horn
   digitalWrite(PIN_HORN, LOW);
 
+  // Initially disable the SPI components (enabled on demand)
+  digitalWrite(PIN_SR_LATCH, HIGH);
+  digitalWrite(PIN_AUX_LATCH, HIGH);
+
   // Initially clear all registers
   clearRegisters();
   writeRegisters();
+
+  // Set default AUX value to 0 (100k resistance)
+  digitalWrite(PIN_AUX_LATCH, LOW);
+  SPI.transfer(0);
+  digitalWrite(PIN_AUX_LATCH, HIGH);
+
+  // END TEST
 
   // Start BLE scanning
   startScan();
