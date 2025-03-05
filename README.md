@@ -6,11 +6,6 @@
 
 ### Photos
 
-#### Clockspring and spline adapter test fitting
-- Successful fitment with SLA printed steel spline adapter and FDM printed clockspring (prototype)
-
-<img src="assets/steering-wheel.jpeg" />
-
 #### Car PCB v1.0
 - Molex connector for hard-wired button outputs, horn relay and interior light input
 - AUX cable socket for communication with head unit (remote buttons)
@@ -33,6 +28,23 @@
 - Relocated microcontroller for better USB-C accessibility
 
 <img src="assets/steering-wheel-pcb-11.jpeg" />
+
+#### Clockspring Front
+
+<img src="assets/clockspring-front.jpeg" />
+
+#### Clockspring Back
+
+<img src="assets/clockspring-back.jpeg" />
+
+#### Spline Adapter and washer
+
+<img src="assets/spline-adapter.jpeg" />
+
+#### Clockspring and spline adapter test fitting
+- Successful fitment with SLA printed steel spline adapter and FDM printed clockspring (prototype)
+
+<img src="assets/steering-wheel.jpeg" />
 
 ### Material List
 
