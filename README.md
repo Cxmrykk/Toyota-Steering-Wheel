@@ -4,22 +4,35 @@
   <p>Personal project for extending compatibility with my 2003 Toyota Corolla, including extended functionality for the buttons, paddles and horn</p>
 </div>
 
-### Development Progress
+### Photos
 
-#### Models:
+#### Clockspring and spline adapter test fitting
+- Successful fitment with SLA printed steel spline adapter and FDM printed clockspring (prototype)
 
-- Spline adapter: **Complete**
-- Clockspring: **Complete**
+<img src="assets/steering-wheel.jpeg" />
 
-#### PCB:
+#### Car PCB v1.0
+- Molex connector for hard-wired button outputs, horn relay and interior light input
+- AUX cable socket for communication with head unit (remote buttons)
+- Crimp compatible power terminals
 
-- Steering wheel transceiver: **Complete**
-- Car transceiver: **Complete**
+<img src="assets/car-pcb-10.jpeg" />
 
-#### Firmware:
+#### Car PCB v1.1
+- Added digital potentiometer to replace PWM based solution for setting AUX resistance values (didn't work)
 
-- Steering wheel transceiver: **_In Progress_**
-- Clockspring transceiver: **_In Progress_**
+<img src="assets/car-pcb-11.jpeg" />
+
+#### Steering Wheel PCB v1.0
+- IDC connector hard-wired to existing connector wires, includes 12V power in, horn switch and GND
+
+<img src="assets/steering-wheel-pcb-10.jpeg" />
+
+#### Steering Wheel PCB v1.1
+- Fixed resistor ladder design (mode and CC minus buttons being same value)
+- Relocated microcontroller for better USB-C accessibility
+
+<img src="assets/steering-wheel-pcb-11.jpeg" />
 
 ### Material List
 
