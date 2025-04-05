@@ -1,0 +1,172 @@
+#include <Arduino.h>
+
+// Define analog input pins
+#define PIN_A0 1  // GPIO1 for A0 on XIAO ESP32S3
+#define PIN_A1 2  // GPIO2 for A1 on XIAO ESP32S3
+
+enum class ButtonID : uint8_t {
+  NONE = 0,
+  MODE = 1,
+  LEFT = 2,
+  NEXT_SONG = 3,
+  OK = 4,
+  UP = 5,
+  PREV_SONG = 6,
+  RETURN = 7,
+  PHONE = 8,
+  DOWN = 9,
+  VOLUME_UP = 10,
+  ASSISTANT = 11,
+  RIGHT = 12,
+  VOLUME_DOWN = 13,
+  CRUISE_CONTROL = 14,
+  CANCEL = 15,
+  CC_PLUS = 16,
+  CC_MINUS = 17,
+  RADAR = 18,
+  LANE_ASSIST = 19,
+  PADDLE_LEFT = 20,
+  PADDLE_RIGHT = 21,
+  HORN = 22,
+};
+
+namespace Threshold {
+// Resting state values
+constexpr uint16_t A0_RESTING = 3500;
+constexpr uint16_t A1_RESTING = 4000;
+
+// A0 thresholds (values must be BELOW these to trigger)
+constexpr uint16_t A0_VOLUME_DOWN = 1890;
+constexpr uint16_t A0_RIGHT = 1860;
+constexpr uint16_t A0_ASSISTANT = 1820;
+constexpr uint16_t A0_VOLUME_UP = 980;
+constexpr uint16_t A0_DOWN = 900;
+constexpr uint16_t A0_PHONE = 850;
+constexpr uint16_t A0_RETURN = 550;
+constexpr uint16_t A0_PREV_SONG = 480;
+constexpr uint16_t A0_UP = 400;
+constexpr uint16_t A0_OK = 280;
+constexpr uint16_t A0_NEXT_SONG = 180;
+constexpr uint16_t A0_LEFT = 80;
+constexpr uint16_t A0_MODE = 0;
+
+// A1 thresholds (values must be BELOW these to trigger)
+constexpr uint16_t A1_LANE_ASSIST = 1980;
+constexpr uint16_t A1_RADAR = 1880;
+constexpr uint16_t A1_CC_MINUS = 1600;
+constexpr uint16_t A1_CC_PLUS = 820;
+constexpr uint16_t A1_CANCEL = 320;
+constexpr uint16_t A1_CRUISE_CONTROL = 0;
+
+}  // namespace Threshold
+
+ButtonID getButtonPressed() {
+  uint16_t valueA0 = analogRead(PIN_A0);
+  uint16_t valueA1 = analogRead(PIN_A1);
+
+  // Check if A0 is significantly below resting state
+  if (valueA0 < (Threshold::A0_RESTING)) {
+    Serial.println(valueA0);
+    delay(100);
+    if (valueA0 > Threshold::A0_VOLUME_DOWN) return ButtonID::VOLUME_DOWN;
+    if (valueA0 > Threshold::A0_RIGHT) return ButtonID::RIGHT;
+    if (valueA0 > Threshold::A0_ASSISTANT) return ButtonID::ASSISTANT;
+    if (valueA0 > Threshold::A0_VOLUME_UP) return ButtonID::VOLUME_UP;
+    if (valueA0 > Threshold::A0_DOWN) return ButtonID::DOWN;
+    if (valueA0 > Threshold::A0_PHONE) return ButtonID::PHONE;
+    if (valueA0 > Threshold::A0_RETURN) return ButtonID::RETURN;
+    if (valueA0 > Threshold::A0_PREV_SONG) return ButtonID::PREV_SONG;
+    if (valueA0 > Threshold::A0_UP) return ButtonID::UP;
+    if (valueA0 > Threshold::A0_OK) return ButtonID::OK;
+    if (valueA0 > Threshold::A0_NEXT_SONG) return ButtonID::NEXT_SONG;
+    if (valueA0 > Threshold::A0_LEFT) return ButtonID::LEFT;
+    if (valueA0 >= Threshold::A0_MODE) return ButtonID::MODE;
+  }
+
+  // Check if A1 is significantly below resting state
+  if (valueA1 < (Threshold::A1_RESTING)) {
+    Serial.println(valueA1);
+    delay(100);
+    if (valueA1 > Threshold::A1_LANE_ASSIST) return ButtonID::LANE_ASSIST;
+    if (valueA1 > Threshold::A1_RADAR) return ButtonID::RADAR;
+    if (valueA1 > Threshold::A1_CC_MINUS) return ButtonID::CC_MINUS;
+    if (valueA1 > Threshold::A1_CC_PLUS) return ButtonID::CC_PLUS;
+    if (valueA1 > Threshold::A1_CANCEL) return ButtonID::CANCEL;
+    if (valueA1 >= Threshold::A1_CRUISE_CONTROL)
+      return ButtonID::CRUISE_CONTROL;
+  }
+
+  return ButtonID::NONE;
+}
+
+const char* buttonToString(ButtonID button) {
+  switch (button) {
+    case ButtonID::NONE:
+      return "NONE";
+    case ButtonID::MODE:
+      return "MODE";
+    case ButtonID::LEFT:
+      return "LEFT";
+    case ButtonID::NEXT_SONG:
+      return "NEXT_SONG";
+    case ButtonID::OK:
+      return "OK";
+    case ButtonID::UP:
+      return "UP";
+    case ButtonID::PREV_SONG:
+      return "PREV_SONG";
+    case ButtonID::RETURN:
+      return "RETURN";
+    case ButtonID::PHONE:
+      return "PHONE";
+    case ButtonID::DOWN:
+      return "DOWN";
+    case ButtonID::VOLUME_UP:
+      return "VOLUME_UP";
+    case ButtonID::ASSISTANT:
+      return "ASSISTANT";
+    case ButtonID::RIGHT:
+      return "RIGHT";
+    case ButtonID::VOLUME_DOWN:
+      return "VOLUME_DOWN";
+    case ButtonID::CRUISE_CONTROL:
+      return "CRUISE_CONTROL";
+    case ButtonID::CANCEL:
+      return "CANCEL";
+    case ButtonID::CC_PLUS:
+      return "CC_PLUS";
+    case ButtonID::CC_MINUS:
+      return "CC_MINUS";
+    case ButtonID::RADAR:
+      return "RADAR";
+    case ButtonID::LANE_ASSIST:
+      return "LANE_ASSIST";
+    case ButtonID::PADDLE_LEFT:
+      return "PADDLE_LEFT";
+    case ButtonID::PADDLE_RIGHT:
+      return "PADDLE_RIGHT";
+    case ButtonID::HORN:
+      return "HORN";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  analogReadResolution(12);
+  pinMode(PIN_A0, INPUT);
+  pinMode(PIN_A1, INPUT);
+  pinMode(A5, OUTPUT);
+  delay(1000);
+}
+
+void loop() {
+  //ButtonID pressedButton = getButtonPressed();
+
+  //if (pressedButton != ButtonID::NONE) {
+  //  Serial.print("Button pressed: ");
+  //  Serial.println(buttonToString(pressedButton));
+  //}
+  delay(1);
+}

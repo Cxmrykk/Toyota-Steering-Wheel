@@ -13,7 +13,6 @@ static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
 #define PIN_INTERIOR D0
 #define PIN_HORN D1
-#define PIN_SR_LATCH D3
 #define PIN_CLOCK SCK
 #define PIN_DATA MOSI
 
@@ -29,47 +28,6 @@ static bool lastInteriorLightState = false;
 const int NUM_REGISTERS = 3;
 const int NUM_OUTPUTS = NUM_REGISTERS * 8;  // Total number of outputs (8 outputs per register * 3 registers)
 
-// Array to keep track of current state
-byte registerStates[NUM_REGISTERS] = {0};
-
-// Function to clear all registers (remains the same)
-void clearRegisters() {
-  for (int i = 0; i < NUM_REGISTERS; i++) {
-    registerStates[i] = 0;
-  }
-}
-
-// Function to write data to all registers using hardware SPI
-void writeRegisters() {
-  // Pull latch pin low to start transfer
-  digitalWrite(PIN_SR_LATCH, LOW);
-
-  // Transfer data for each register
-  // Note: We transfer from last register to first (MSB first)
-  for (int i = NUM_REGISTERS - 1; i >= 0; i--) {
-    SPI.transfer(registerStates[i]);
-  }
-
-  // Pull latch pin high to update outputs
-  digitalWrite(PIN_SR_LATCH, HIGH);
-}
-
-// Function to set a specific output (remains the same)
-void setOutput(int output, bool state) {
-  if (output < 0 || output >= NUM_OUTPUTS) return;
-
-  int registerIndex = output / 8;
-  int bitIndex = output % 8;
-
-  if (state) {
-    registerStates[registerIndex] |= (1 << bitIndex);
-  } else {
-    registerStates[registerIndex] &= ~(1 << bitIndex);
-  }
-
-  writeRegisters();
-}
-
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
   for (int i = 0; i < length; i++) {
     uint8_t buttonState = pData[i];
@@ -79,11 +37,6 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
 
     if (buttonReleased) {
       digitalWrite(LED_BUILTIN, HIGH);
-
-      // Turn off shift register output
-      if (buttonValue <= 21) {
-        setOutput(buttonValue, false);
-      }
 
       // Turn off horn
       if (buttonValue == 22) {
@@ -97,11 +50,6 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
       Serial.println(" released");
     } else {
       digitalWrite(LED_BUILTIN, LOW);
-
-      // Turn on shift register output
-      if (buttonValue <= 21) {
-        setOutput(buttonValue, true);
-      }
 
       // Turn on horn
       if (buttonValue == 22) {
@@ -183,14 +131,17 @@ void startScan() {
 }
 
 void setup() {
+  // Initially disable the horn
+  digitalWrite(PIN_HORN, LOW);
+
   Serial.begin(115200);
   BLEDevice::init("XIAO_ESP32S3_CLIENT");
 
   // Initialise SPI
   SPI.begin();
-  SPI.setDataMode(SPI_MODE0); // TPL0501 uses SPI Mode 0 (CPOL=0, CPHA=0)
+  SPI.setDataMode(SPI_MODE0);  // TPL0501 uses SPI Mode 0 (CPOL=0, CPHA=0)
   SPI.setBitOrder(MSBFIRST);   // TPL0501 uses MSB first
-  SPI.setClockDivider(SPI_CLOCK_DIV4); 
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
 
   // Set the LED to default state (on)
   pinMode(LED_BUILTIN, OUTPUT);
@@ -199,26 +150,15 @@ void setup() {
   // Initialise other pins
   pinMode(PIN_INTERIOR, INPUT);
   pinMode(PIN_HORN, OUTPUT);
-  pinMode(PIN_AUX_LATCH, OUTPUT);
-  pinMode(PIN_SR_LATCH, OUTPUT);
-
-  // Initially disable the horn
-  digitalWrite(PIN_HORN, LOW);
+  pinMode(PIN_LATCH, OUTPUT);
 
   // Initially disable the SPI components (enabled on demand)
-  digitalWrite(PIN_SR_LATCH, HIGH);
-  digitalWrite(PIN_AUX_LATCH, HIGH);
-
-  // Initially clear all registers
-  clearRegisters();
-  writeRegisters();
+  digitalWrite(PIN_LATCH, HIGH);
 
   // Set default AUX value to 0 (100k resistance)
-  digitalWrite(PIN_AUX_LATCH, LOW);
+  digitalWrite(PIN_LATCH, LOW);
   SPI.transfer(0);
-  digitalWrite(PIN_AUX_LATCH, HIGH);
-
-  // END TEST
+  digitalWrite(PIN_LATCH, HIGH);
 
   // Start BLE scanning
   startScan();
@@ -241,7 +181,7 @@ void loop() {
   }
 
   if (connected) {
-    bool currentInteriorLightState = digitalRead(PIN_INTERIOR) == LOW;
+    bool currentInteriorLightState = digitalRead(PIN_INTERIOR) == HIGH;
     if (currentInteriorLightState != lastInteriorLightState) {
       uint8_t stateToSend = static_cast<uint8_t>(ButtonID::BACKLIGHT);
       if (!currentInteriorLightState) {

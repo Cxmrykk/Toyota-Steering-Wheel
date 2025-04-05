@@ -4,7 +4,7 @@
 #include <map>
 
 // PWM Configuration
-#define PIN_AUX_LATCH D2
+#define PIN_LATCH D2
 
 struct PWMConfig {
   uint16_t value;
@@ -63,12 +63,12 @@ inline void setRemoteState(ButtonID button, bool isPressed) {
     Serial.println(static_cast<int>(button));
 
     // Pull latch pin low to start transfer
-    digitalWrite(PIN_AUX_LATCH, LOW);
+    digitalWrite(PIN_LATCH, LOW);
 
     // Transfer data for each register
     SPI.transfer(isPressed ? it->second : 0);
 
     // Pull latch pin high to update outputs
-    digitalWrite(PIN_AUX_LATCH, HIGH);
+    digitalWrite(PIN_LATCH, HIGH);
   }
 }

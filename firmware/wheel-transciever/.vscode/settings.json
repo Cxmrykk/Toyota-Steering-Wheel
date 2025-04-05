@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.old": "cpp",
+        "new": "cpp"
+    }
+}
