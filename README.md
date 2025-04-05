@@ -102,4 +102,4 @@
 
 - Provides wiring for the airbag and repurposed horn cable (12V Power)
 - Printed locally using Bambu P1S (White ABS, 0.2mm nozzle)
-- You must also purchase the clockspring used with the old steering wheel, as the new clockspring will reuse the spiral ribbon cable and connectors.
+- You must also purchase the clockspring used with the old steering wheel, as the new clockspring will reuse the spiral ribbon cable and connectors (part number: `84306-0D021`)
