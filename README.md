@@ -18,6 +18,13 @@
 
 <img src="assets/car-pcb-11.jpeg" />
 
+#### Car PCB v1.2
+- Modified board design for more I/O accessibility
+- Replaced 24 pin Molex connector with 8 screw output terminals
+- Added horn relay
+
+<img src="assets/car-pcb-12.jpeg" />
+
 #### Steering Wheel PCB v1.0
 - IDC connector hard-wired to existing connector wires, includes 12V power in, horn switch and GND
 
